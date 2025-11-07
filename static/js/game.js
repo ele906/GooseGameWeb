@@ -1,6 +1,11 @@
-// Game constants
-const CANVAS_WIDTH = 1000;
-const CANVAS_HEIGHT = 600;
+// Game constants - responsive sizing
+const getResponsiveCanvasSize = () => {
+    const maxWidth = Math.min(window.innerWidth * 0.9, 1000);
+    const maxHeight = Math.min(window.innerHeight * 0.5, 600);
+    return { width: maxWidth, height: maxHeight };
+};
+
+const { width: CANVAS_WIDTH, height: CANVAS_HEIGHT } = getResponsiveCanvasSize();
 const FPS = 60;
 
 // Monte Carlo simulation parameters
