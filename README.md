@@ -1,4 +1,4 @@
-# 🦆 Goose Migration Game - Web Version
+# 🪿 Goose Migration Game - Web Version
 
 A fun browser-based game simulating goose lifecycle, breeding, and survival against predators!
 
