@@ -24,18 +24,54 @@
         <div class="controls">
             <button id="resetBtn" class="btn">Reset Game</button>
             <button id="pauseBtn" class="btn">Pause</button>
+            <button id="mateBtn" class="btn btn-action">Force Mating 💕</button>
+            <button id="migrateBtn" class="btn btn-action">Trigger Migration 🦆</button>
+            <button id="hideAllBtn" class="btn btn-action">Hide All Geese 🌳</button>
+            <button id="addPredatorBtn" class="btn btn-danger">Add Predator 🦊</button>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-box">
+                <h4>Migration Status</h4>
+                <div id="migrationStatus">Not migrating</div>
+            </div>
+            <div class="info-box">
+                <h4>Breeding Cooldown</h4>
+                <div id="breedingCooldown">Ready</div>
+            </div>
+            <div class="info-box">
+                <h4>Survival Rate</h4>
+                <div id="survivalRate">100%</div>
+            </div>
         </div>
 
         <div class="instructions">
             <h3>How to Play:</h3>
             <ul>
-                <li>🥚 Eggs hatch into goslings that follow their parents</li>
-                <li>🐥 Goslings grow into adult geese and earn you points</li>
-                <li>🦊 Avoid foxes and eagles that hunt your flock</li>
+                <li>🥚 Eggs hatch into goslings that follow their parents (85% survival rate)</li>
+                <li>🐥 Goslings grow into adult geese and earn points (70% reach adulthood)</li>
+                <li>🦊 Avoid foxes and eagles - they hunt using stochastic pathfinding</li>
                 <li>💧 Ponds are safe zones for geese</li>
-                <li>🌳 Click geese to make them hide in bushes</li>
+                <li>🌳 Click individual geese or use "Hide All" button to hide in bushes</li>
+                <li>💕 Force breeding with the "Force Mating" button (80% success rate)</li>
+                <li>✈️ Trigger migration to move all adults to a random destination</li>
+                <li>⚡ Energy and weather affect survival (Monte Carlo simulation)</li>
                 <li>❤️ Keep your flock alive as long as possible!</li>
             </ul>
+            
+            <div style="margin-top: 15px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+                <h4 style="margin-bottom: 10px;">🎲 Stochastic Simulation Features:</h4>
+                <p style="margin: 5px 0; color: #555;">
+                    This game uses <strong>Monte Carlo methods</strong> to simulate realistic survival probabilities:
+                </p>
+                <ul style="margin-top: 10px;">
+                    <li>Breeding success depends on energy levels and random chance</li>
+                    <li>Egg hatching and gosling maturation have probabilistic outcomes</li>
+                    <li>Predator attacks use distance-based probability calculations</li>
+                    <li>Migration involves energy loss and weather variance</li>
+                    <li>Random events (storms) can impact the entire flock</li>
+                </ul>
+            </div>
         </div>
     </div>
 

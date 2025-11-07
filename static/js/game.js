@@ -3,6 +3,26 @@ const CANVAS_WIDTH = 1000;
 const CANVAS_HEIGHT = 600;
 const FPS = 60;
 
+// Monte Carlo simulation parameters
+const SIMULATION_PARAMS = {
+    // Survival probabilities (used in Monte Carlo simulation)
+    EGG_SURVIVAL_RATE: 0.85,        // 85% of eggs hatch successfully
+    GOSLING_SURVIVAL_RATE: 0.70,    // 70% of goslings reach adulthood
+    PREDATOR_CATCH_PROBABILITY: 0.02, // 2% chance per frame if in range
+    
+    // Stochastic breeding parameters
+    BREEDING_SUCCESS_RATE: 0.80,    // 80% chance breeding produces egg
+    BREEDING_COOLDOWN: 300,         // Frames between breeding attempts
+    
+    // Migration stochastic factors
+    MIGRATION_ENERGY_LOSS: 0.1,     // Energy lost per frame during migration
+    MIGRATION_SUCCESS_RATE: 0.95,   // 95% survive migration
+    WEATHER_VARIANCE: 0.3,          // Random weather impact on migration
+    
+    // Random events
+    RANDOM_EVENT_CHANCE: 0.001      // Rare events like storms
+};
+
 // Game states
 const GooseState = {
     EGG: 'egg',
@@ -31,23 +51,78 @@ class Goose {
         this.ageWeeks = state === GooseState.ADULT ? 0 : -weeksLeft;
         this.hiding = false;
         this.hidingEndTime = 0;
+        
+        // Migration and stochastic properties
+        this.energy = 100;
+        this.migrating = false;
+        this.migrationTarget = null;
+        this.survivalChance = this.calculateSurvivalChance();
+    }
+
+    calculateSurvivalChance() {
+        // Monte Carlo: Calculate survival probability based on multiple factors
+        let chance = 1.0;
+        
+        if (this.state === GooseState.EGG) {
+            chance *= SIMULATION_PARAMS.EGG_SURVIVAL_RATE;
+        } else if (this.state === GooseState.GOSLING) {
+            chance *= SIMULATION_PARAMS.GOSLING_SURVIVAL_RATE;
+        }
+        
+        // Energy affects survival
+        chance *= (this.energy / 100);
+        
+        // Random variance
+        chance *= (0.9 + Math.random() * 0.2);
+        
+        return Math.min(1.0, Math.max(0, chance));
     }
 
     move(width, height) {
         if (this.state === GooseState.EGG) return;
 
+        // Migration behavior (stochastic movement towards target)
+        if (this.migrating && this.migrationTarget) {
+            const dx = this.migrationTarget.x - this.x;
+            const dy = this.migrationTarget.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 50) {
+                // Move towards target with random variance (Monte Carlo)
+                const weatherFactor = 1.0 + (Math.random() - 0.5) * SIMULATION_PARAMS.WEATHER_VARIANCE;
+                this.vx = (dx / distance * 3 + Math.random() * 2 - 1) * weatherFactor;
+                this.vy = (dy / distance * 3 + Math.random() * 2 - 1) * weatherFactor;
+                
+                // Lose energy during migration
+                this.energy -= SIMULATION_PARAMS.MIGRATION_ENERGY_LOSS;
+                
+                // Stochastic migration failure
+                if (this.energy <= 0 || Math.random() > SIMULATION_PARAMS.MIGRATION_SUCCESS_RATE) {
+                    this.migrating = false;
+                    this.energy = Math.max(10, this.energy);
+                }
+            } else {
+                this.migrating = false;
+                this.energy = Math.min(100, this.energy + 20); // Reached destination
+            }
+        }
         // Goslings follow parent
-        if (this.state === GooseState.GOSLING && this.parent) {
+        else if (this.state === GooseState.GOSLING && this.parent) {
             const dx = this.parent.x - this.x;
             const dy = this.parent.y - this.y;
             const factor = 15;
             this.vx = dx / factor + Math.random() * 0.4 - 0.2;
             this.vy = dy / factor + Math.random() * 0.4 - 0.2;
         } else {
-            // Random wandering
+            // Random wandering with stochastic variation
             if (Math.random() < 0.05) {
                 this.vx += Math.random() - 0.5;
                 this.vy += Math.random() - 0.5;
+            }
+            
+            // Slowly regain energy when not migrating
+            if (this.energy < 100) {
+                this.energy += 0.05;
             }
         }
 
@@ -74,6 +149,11 @@ class Goose {
         // Update facing
         if (this.vx < 0) this.facingLeft = true;
         else if (this.vx > 0) this.facingLeft = false;
+        
+        // Update survival chance periodically
+        if (Math.random() < 0.01) {
+            this.survivalChance = this.calculateSurvivalChance();
+        }
     }
 
     draw(ctx) {
@@ -188,7 +268,13 @@ class Predator {
     }
 
     canAttack(goose) {
-        return this.distance(goose) < 30 && !goose.hiding;
+        const inRange = this.distance(goose) < 30 && !goose.hiding;
+        if (!inRange) return false;
+        
+        // Monte Carlo: Stochastic catch probability
+        // Not every contact results in a catch
+        const catchChance = SIMULATION_PARAMS.PREDATOR_CATCH_PROBABILITY * (1 - goose.survivalChance);
+        return Math.random() < catchChance;
     }
 
     draw(ctx) {
@@ -289,6 +375,12 @@ class Game {
         this.paused = false;
         this.startTime = Date.now();
         
+        // Migration and breeding tracking
+        this.migrationActive = false;
+        this.breedingCooldown = 0;
+        this.totalBorn = 0;
+        this.totalDied = 0;
+        
         this.init();
         
         // Mouse click handler
@@ -356,6 +448,11 @@ class Game {
         if (this.gameOver || this.paused) return;
 
         this.gameTime++;
+        
+        // Decrease breeding cooldown
+        if (this.breedingCooldown > 0) {
+            this.breedingCooldown--;
+        }
 
         // Update geese
         this.geese.forEach(goose => {
@@ -368,36 +465,63 @@ class Game {
             predator.move(this.width, this.height, this.geese);
         });
 
-        // Check attacks
+        // Check attacks (now with stochastic probability)
         for (let i = this.geese.length - 1; i >= 0; i--) {
             const goose = this.geese[i];
             for (const predator of this.predators) {
                 if (predator.canAttack(goose) && goose.state !== GooseState.EGG) {
                     this.geese.splice(i, 1);
+                    this.totalDied++;
                     break;
                 }
             }
         }
+        
+        // Monte Carlo: Random events (storms, etc.)
+        if (Math.random() < SIMULATION_PARAMS.RANDOM_EVENT_CHANCE) {
+            // Storm event: All geese lose energy
+            this.geese.forEach(g => g.energy = Math.max(10, g.energy - 30));
+        }
 
-        // Breeding
+        // Breeding (with cooldown)
         if (this.gameTime % 500 === 0) {
             this.breed();
         }
 
-        // Hatching eggs
+        // Hatching eggs (with stochastic survival)
         this.geese.forEach(goose => {
             if (goose.state === GooseState.EGG && goose.weeksLeft <= 0) {
-                goose.state = GooseState.GOSLING;
-                goose.weeksLeft = 12;
+                // Monte Carlo: Not all eggs hatch successfully
+                if (Math.random() < SIMULATION_PARAMS.EGG_SURVIVAL_RATE) {
+                    goose.state = GooseState.GOSLING;
+                    goose.weeksLeft = 12;
+                } else {
+                    // Egg didn't survive
+                    const index = this.geese.indexOf(goose);
+                    if (index > -1) {
+                        this.geese.splice(index, 1);
+                        this.totalDied++;
+                    }
+                }
             }
         });
 
-        // Maturing goslings
+        // Maturing goslings (with stochastic survival)
         this.geese.forEach(goose => {
             if (goose.state === GooseState.GOSLING && goose.weeksLeft <= 0) {
-                goose.state = GooseState.ADULT;
-                goose.parent = null;
-                this.score += 10;
+                // Monte Carlo: Not all goslings reach adulthood
+                if (Math.random() < goose.survivalChance) {
+                    goose.state = GooseState.ADULT;
+                    goose.parent = null;
+                    this.score += 10;
+                } else {
+                    // Gosling didn't survive
+                    const index = this.geese.indexOf(goose);
+                    if (index > -1) {
+                        this.geese.splice(index, 1);
+                        this.totalDied++;
+                    }
+                }
             }
         });
 
@@ -410,21 +534,94 @@ class Game {
     }
 
     breed() {
-        const males = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'male');
-        const females = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'female');
+        if (this.breedingCooldown > 0) return;
+        
+        const males = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'male' && g.energy > 50);
+        const females = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'female' && g.energy > 50);
 
         if (males.length > 0 && females.length > 0) {
-            const mother = females[Math.floor(Math.random() * females.length)];
-            const egg = new Goose(
-                GooseState.EGG,
-                4,
-                mother.x + 20,
-                mother.y + 20,
-                Math.random() < 0.5 ? 'male' : 'female',
-                mother
-            );
-            this.geese.push(egg);
+            // Monte Carlo: Not all breeding attempts succeed
+            if (Math.random() < SIMULATION_PARAMS.BREEDING_SUCCESS_RATE) {
+                const mother = females[Math.floor(Math.random() * females.length)];
+                const egg = new Goose(
+                    GooseState.EGG,
+                    4,
+                    mother.x + 20,
+                    mother.y + 20,
+                    Math.random() < 0.5 ? 'male' : 'female',
+                    mother
+                );
+                this.geese.push(egg);
+                this.totalBorn++;
+                
+                // Breeding costs energy
+                mother.energy -= 10;
+            }
+            
+            this.breedingCooldown = SIMULATION_PARAMS.BREEDING_COOLDOWN;
         }
+    }
+    
+    forceMating() {
+        // Button action: Force immediate breeding attempt
+        this.breedingCooldown = 0;
+        this.breed();
+    }
+    
+    triggerMigration() {
+        // Button action: Start migration for all adult geese
+        this.migrationActive = true;
+        const target = {
+            x: Math.random() * this.width,
+            y: Math.random() * this.height
+        };
+        
+        this.geese.forEach(goose => {
+            if (goose.state === GooseState.ADULT) {
+                goose.migrating = true;
+                goose.migrationTarget = target;
+            }
+        });
+        
+        setTimeout(() => {
+            this.migrationActive = false;
+        }, 5000);
+    }
+    
+    hideAllGeese() {
+        // Button action: Make all geese hide in nearest bushes
+        this.geese.forEach(goose => {
+            if (goose.state !== GooseState.EGG) {
+                let nearestBush = null;
+                let minDist = Infinity;
+                for (const bush of this.bushes) {
+                    const dist = Math.sqrt(
+                        (bush.x - goose.x) ** 2 + (bush.y - goose.y) ** 2
+                    );
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearestBush = bush;
+                    }
+                }
+                
+                if (nearestBush) {
+                    goose.hiding = true;
+                    goose.x = nearestBush.x;
+                    goose.y = nearestBush.y;
+                    setTimeout(() => {
+                        goose.hiding = false;
+                    }, 3000);
+                }
+            }
+        });
+    }
+    
+    addPredator() {
+        // Button action: Add a random predator
+        const type = Math.random() < 0.5 ? PredatorType.FOX : PredatorType.EAGLE;
+        const x = Math.random() * this.width;
+        const y = Math.random() * this.height;
+        this.predators.push(new Predator(type, x, y));
     }
 
     draw() {
@@ -461,6 +658,35 @@ class Game {
         document.getElementById('geese-count').textContent = `Geese: ${this.geese.length}`;
         const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
         document.getElementById('time').textContent = `Time: ${elapsed}s`;
+        
+        // Update new UI elements
+        const migrationStatus = document.getElementById('migrationStatus');
+        if (this.migrationActive) {
+            migrationStatus.textContent = '🦆 Migrating...';
+            migrationStatus.style.color = '#11998e';
+        } else {
+            migrationStatus.textContent = 'Not migrating';
+            migrationStatus.style.color = '#999';
+        }
+        
+        const breedingCooldown = document.getElementById('breedingCooldown');
+        if (this.breedingCooldown > 0) {
+            breedingCooldown.textContent = `${Math.ceil(this.breedingCooldown / 60)}s`;
+            breedingCooldown.style.color = '#ee0979';
+        } else {
+            breedingCooldown.textContent = 'Ready';
+            breedingCooldown.style.color = '#38ef7d';
+        }
+        
+        const survivalRate = document.getElementById('survivalRate');
+        if (this.totalBorn > 0) {
+            const rate = ((this.totalBorn - this.totalDied) / this.totalBorn * 100).toFixed(1);
+            survivalRate.textContent = `${rate}%`;
+            survivalRate.style.color = rate > 70 ? '#38ef7d' : rate > 40 ? '#ff9800' : '#ee0979';
+        } else {
+            survivalRate.textContent = '100%';
+            survivalRate.style.color = '#38ef7d';
+        }
     }
 
     reset() {
@@ -473,6 +699,10 @@ class Game {
         this.gameOver = false;
         this.paused = false;
         this.startTime = Date.now();
+        this.migrationActive = false;
+        this.breedingCooldown = 0;
+        this.totalBorn = 2; // Starting geese
+        this.totalDied = 0;
         this.init();
         this.updateUI();
     }
@@ -506,5 +736,21 @@ window.addEventListener('load', () => {
     document.getElementById('pauseBtn').addEventListener('click', () => {
         const paused = game.togglePause();
         document.getElementById('pauseBtn').textContent = paused ? 'Resume' : 'Pause';
+    });
+    
+    document.getElementById('mateBtn').addEventListener('click', () => {
+        game.forceMating();
+    });
+    
+    document.getElementById('migrateBtn').addEventListener('click', () => {
+        game.triggerMigration();
+    });
+    
+    document.getElementById('hideAllBtn').addEventListener('click', () => {
+        game.hideAllGeese();
+    });
+    
+    document.getElementById('addPredatorBtn').addEventListener('click', () => {
+        game.addPredator();
     });
 });

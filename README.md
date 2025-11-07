@@ -209,4 +209,4 @@ Enjoy the game! Feel free to customize and expand it. This is a great portfolio 
 
 ---
 
-Made with 🦆 and ❤️
+Made with 🪿 and ❤️
