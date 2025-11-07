@@ -1,12 +1,14 @@
-// Game constants - responsive sizing
+// Game constants - will be set after page loads
+let CANVAS_WIDTH = 1000;
+let CANVAS_HEIGHT = 600;
+const FPS = 60;
+
+// Function to get responsive canvas size
 const getResponsiveCanvasSize = () => {
     const maxWidth = Math.min(window.innerWidth * 0.9, 1000);
     const maxHeight = Math.min(window.innerHeight * 0.5, 600);
     return { width: maxWidth, height: maxHeight };
 };
-
-const { width: CANVAS_WIDTH, height: CANVAS_HEIGHT } = getResponsiveCanvasSize();
-const FPS = 60;
 
 // Monte Carlo simulation parameters
 const SIMULATION_PARAMS = {
@@ -1097,6 +1099,11 @@ class Game {
 let game;
 
 window.addEventListener('load', () => {
+    // Set responsive canvas size
+    const size = getResponsiveCanvasSize();
+    CANVAS_WIDTH = size.width;
+    CANVAS_HEIGHT = size.height;
+    
     const canvas = document.getElementById('gameCanvas');
     game = new Game(canvas);
 
