@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # 🪿 Goose Migration Simulation Game
+=======
+# 🪿 Goose Migration Game - Web Version
+>>>>>>> 17b9a4977dc5605d47e7ecc6e592235c4c37f07d
 
 A realistic web-based goose migration simulation game built with Flask and vanilla JavaScript. Guide your flock through the challenges of migration using **Monte Carlo simulation** for realistic survival probabilities and **geographic modeling** for climate-based gameplay!
 
