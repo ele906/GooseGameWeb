@@ -259,44 +259,24 @@ class Goose {
         }
 
         if (this.state === GooseState.EGG) {
-            // Draw egg BIGGER and more visible!
-            ctx.save();
-            
-            // Draw shadow
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.beginPath();
-            ctx.ellipse(this.x + 2, this.y + 32, 28, 12, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Main egg body - MUCH BIGGER
-            ctx.fillStyle = '#f5f5dc'; // Cream color
-            ctx.beginPath();
-            ctx.ellipse(this.x, this.y, 30, 40, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Outline
-            ctx.strokeStyle = '#d3d3d3';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            // Highlight (shiny)
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.beginPath();
-            ctx.ellipse(this.x - 8, this.y - 12, 10, 16, -0.3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Speckles - MORE and DARKER
-            ctx.fillStyle = '#a89968';
-            for (let i = 0; i < 8; i++) {
-                const angle = (i / 8) * Math.PI * 2;
-                const speckX = this.x + Math.cos(angle) * 12 + (Math.random() - 0.5) * 8;
-                const speckY = this.y + Math.sin(angle) * 18 + (Math.random() - 0.5) * 12;
+            // Draw egg with actual image (bigger)
+            if (game && game.images.egg.complete) {
+                const size = 60; // Size for egg
+                ctx.save();
+                ctx.drawImage(game.images.egg, this.x - size/2, this.y - size/2, size, size);
+                ctx.restore();
+            } else {
+                // Fallback if image not loaded - draw simple egg
+                ctx.save();
+                ctx.fillStyle = '#f5f5dc'; // Cream color
                 ctx.beginPath();
-                ctx.arc(speckX, speckY, 2 + Math.random() * 2, 0, Math.PI * 2);
+                ctx.ellipse(this.x, this.y, 30, 40, 0, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.strokeStyle = '#d3d3d3';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
             }
-            
-            ctx.restore();
         } else if (this.state === GooseState.GOSLING) {
             // Draw gosling with actual image (bigger)
             if (game && game.images.gosling.complete) {
@@ -510,7 +490,7 @@ class Game {
         
         // Load images
         this.images = {
-            egg: null,
+            egg: new Image(),
             gosling: new Image(),
             adult: new Image(),
             fox: new Image(),
@@ -518,6 +498,7 @@ class Game {
             bush: new Image()
         };
         
+        this.images.egg.src = '/static/images/egg.png';
         this.images.gosling.src = '/static/images/gosling.png';
         this.images.adult.src = '/static/images/goose_adult.jpg';
         this.images.fox.src = '/static/images/fox.png';
@@ -526,6 +507,9 @@ class Game {
         this.imagesLoaded = 0;
         
         // Wait for images to load
+        this.images.egg.onload = () => {
+            this.imagesLoaded++;
+        };
         this.images.gosling.onload = () => {
             this.imagesLoaded++;
         };
@@ -824,8 +808,8 @@ class Game {
                     const egg = new Goose(
                         GooseState.EGG,
                         0, // weeksLeft will be set by constructor based on normal dist
-                        mother.x + (Math.random() * 40 - 20),
-                        mother.y + (Math.random() * 40 - 20),
+                        mother.x + (Math.random() * 120 - 60),
+                        mother.y + (Math.random() * 120 - 60),
                         Math.random() < 0.5 ? 'male' : 'female',
                         mother
                     );
