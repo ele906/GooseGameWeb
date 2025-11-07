@@ -28,6 +28,49 @@ header {
     margin-bottom: 20px;
 }
 
+.event-log {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    padding: 12px 20px;
+    margin: 15px 0;
+    max-height: 80px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+}
+
+.event-message {
+    padding: 4px 0;
+    font-size: 0.95em;
+    color: #333;
+    animation: slideIn 0.3s ease-out;
+}
+
+.event-message.important {
+    font-weight: bold;
+    color: #ee0979;
+}
+
+.event-message.positive {
+    color: #11998e;
+    font-weight: bold;
+}
+
+.event-message.warning {
+    color: #ff6a00;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 h1 {
     color: #333;
     margin-bottom: 15px;
@@ -55,14 +98,48 @@ h1 {
     background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 100%);
     cursor: pointer;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    max-width: 100%;
+    height: auto;
 }
 
 .controls {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin: 20px 0;
+    margin: 15px 0;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+.migration-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.migration-controls-wrapper label {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #333;
+}
+
+.migration-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.migration-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #667eea;
 }
 
 .btn {
@@ -80,6 +157,26 @@ h1 {
 
 .btn-action {
     background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.btn-special {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+}
+
+.btn-direction {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    padding: 10px 20px;
+    font-size: 1.1em;
+}
+
+.btn-direction:hover {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+}
+
+.btn-direction.active {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+    transform: scale(1.05);
 }
 
 .btn-danger {
@@ -169,4 +266,26 @@ h1 {
         width: 100% !important;
         height: auto !important;
     }
+}
+
+/* Fullscreen mode */
+.container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    border-radius: 0;
+    padding: 10px;
+    z-index: 9999;
+    overflow-y: auto;
+}
+
+.container.fullscreen #gameCanvas {
+    max-height: 70vh;
+}
+
+.container.fullscreen .instructions {
+    display: none; /* Hide instructions in fullscreen for more space */
 }
