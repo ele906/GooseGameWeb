@@ -231,7 +231,7 @@ class Goose {
         }
 
         // Limit speed (slowed down for better visibility)
-        const maxSpeed = this.state === GooseState.GOSLING ? 0.6 : 0.9;  // Slower max speeds
+        const maxSpeed = this.state === GooseState.GOSLING ? 0.4 : 0.9;  // Goslings much slower
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         if (speed > maxSpeed) {
             this.vx = (this.vx / speed) * maxSpeed;
@@ -251,9 +251,9 @@ class Goose {
         this.x = Math.max(margin, Math.min(width - margin, this.x));
         this.y = Math.max(margin, Math.min(height - margin, this.y));
 
-        // Update facing
-        if (this.vx < 0) this.facingLeft = true;
-        else if (this.vx > 0) this.facingLeft = false;
+        // Update facing (with threshold to prevent jittering)
+        if (this.vx < -0.3) this.facingLeft = true;
+        else if (this.vx > 0.3) this.facingLeft = false;
         
         // Update survival chance periodically
         if (Math.random() < 0.01) {
@@ -267,10 +267,10 @@ class Goose {
         }
 
         if (this.state === GooseState.EGG) {
-            // Draw egg with actual image (more elliptical, smaller)
+            // Draw egg with actual image (smaller, perfect ratio)
             if (game && game.images.egg.complete) {
-                const width = 20;  // Width (smaller)
-                const height = 28; // Height (smaller but same ratio)
+                const width = 20;  // Smaller width
+                const height = 28; // Smaller height (same ratio)
                 ctx.save();
                 ctx.drawImage(game.images.egg, this.x - width/2, this.y - height/2, width, height);
                 ctx.restore();
@@ -279,7 +279,7 @@ class Goose {
                 ctx.save();
                 ctx.fillStyle = '#f5f5dc'; // Cream color
                 ctx.beginPath();
-                ctx.ellipse(this.x, this.y, 20, 28, 0, 0, Math.PI * 2);
+                ctx.ellipse(this.x, this.y, 10, 14, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.strokeStyle = '#d3d3d3';
                 ctx.lineWidth = 2;
@@ -1228,36 +1228,44 @@ window.addEventListener('load', () => {
         game.addPredator();
     });
     
-    // Arrow key controls - move all geese
+    // Arrow key controls - move all geese (except eggs!)
     window.addEventListener('keydown', (e) => {
         const moveSpeed = 15; // Pixels to move geese
         
         switch(e.key) {
             case 'ArrowUp':
                 game.geese.forEach(goose => {
-                    goose.y -= moveSpeed;
-                    goose.y = Math.max(50, goose.y); // Keep in bounds
+                    if (goose.state !== GooseState.EGG) { // Eggs don't move
+                        goose.y -= moveSpeed;
+                        goose.y = Math.max(50, goose.y); // Keep in bounds
+                    }
                 });
                 e.preventDefault(); // Prevent page scrolling
                 break;
             case 'ArrowDown':
                 game.geese.forEach(goose => {
-                    goose.y += moveSpeed;
-                    goose.y = Math.min(game.height - 50, goose.y); // Keep in bounds
+                    if (goose.state !== GooseState.EGG) { // Eggs don't move
+                        goose.y += moveSpeed;
+                        goose.y = Math.min(game.height - 50, goose.y); // Keep in bounds
+                    }
                 });
                 e.preventDefault();
                 break;
             case 'ArrowLeft':
                 game.geese.forEach(goose => {
-                    goose.x -= moveSpeed;
-                    goose.x = Math.max(50, goose.x); // Keep in bounds
+                    if (goose.state !== GooseState.EGG) { // Eggs don't move
+                        goose.x -= moveSpeed;
+                        goose.x = Math.max(50, goose.x); // Keep in bounds
+                    }
                 });
                 e.preventDefault();
                 break;
             case 'ArrowRight':
                 game.geese.forEach(goose => {
-                    goose.x += moveSpeed;
-                    goose.x = Math.min(game.width - 50, goose.x); // Keep in bounds
+                    if (goose.state !== GooseState.EGG) { // Eggs don't move
+                        goose.x += moveSpeed;
+                        goose.x = Math.min(game.width - 50, goose.x); // Keep in bounds
+                    }
                 });
                 e.preventDefault();
                 break;
