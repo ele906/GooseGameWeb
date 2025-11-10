@@ -505,12 +505,12 @@ class Game {
             bush: new Image()
         };
         
-        this.images.egg.src = '/static/images/egg.png';
-        this.images.gosling.src = '/static/images/gosling.png';
-        this.images.adult.src = '/static/images/goose_adult.jpg';
-        this.images.fox.src = '/static/images/fox.png';
-        this.images.eagle.src = '/static/images/eagle.png';
-        this.images.bush.src = '/static/images/bush.png';
+        this.images.egg.src = 'static/images/egg.png';
+        this.images.gosling.src = 'static/images/gosling.png';
+        this.images.adult.src = 'static/images/goose_adult.jpg';
+        this.images.fox.src = 'static/images/fox.png';
+        this.images.eagle.src = 'static/images/eagle.png';
+        this.images.bush.src = 'static/images/bush.png';
         this.imagesLoaded = 0;
         
         // Wait for images to load
