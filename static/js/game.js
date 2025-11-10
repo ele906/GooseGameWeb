@@ -126,8 +126,8 @@ class Goose {
         this.y = y;
         this.gender = gender;
         this.parent = parent;
-        this.vx = Math.random() * 2 - 1;
-        this.vy = Math.random() * 2 - 1;
+        this.vx = Math.random() * 1.2 - 0.6;  // Slower movement
+        this.vy = Math.random() * 1.2 - 0.6;  // Slower movement
         this.facingLeft = false;
         this.health = 100;
         this.ageWeeks = state === GooseState.ADULT ? 0 : -this.weeksLeft;
@@ -231,7 +231,7 @@ class Goose {
         }
 
         // Limit speed (slowed down for better visibility)
-        const maxSpeed = this.state === GooseState.GOSLING ? 0.8 : 1.2;
+        const maxSpeed = this.state === GooseState.GOSLING ? 0.6 : 0.9;  // Slower max speeds
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         if (speed > maxSpeed) {
             this.vx = (this.vx / speed) * maxSpeed;
@@ -242,13 +242,14 @@ class Goose {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Bounce off edges
-        if (this.x < 0 || this.x > width) this.vx *= -1;
-        if (this.y < 0 || this.y > height) this.vy *= -1;
+        // Bounce off edges (with margin to keep geese more visible)
+        const margin = 50;
+        if (this.x < margin || this.x > width - margin) this.vx *= -1;
+        if (this.y < margin || this.y > height - margin) this.vy *= -1;
 
-        // Keep in bounds
-        this.x = Math.max(0, Math.min(width, this.x));
-        this.y = Math.max(0, Math.min(height, this.y));
+        // Keep in bounds with margin
+        this.x = Math.max(margin, Math.min(width - margin, this.x));
+        this.y = Math.max(margin, Math.min(height - margin, this.y));
 
         // Update facing
         if (this.vx < 0) this.facingLeft = true;
@@ -266,18 +267,19 @@ class Goose {
         }
 
         if (this.state === GooseState.EGG) {
-            // Draw egg with actual image (bigger)
+            // Draw egg with actual image (more elliptical, smaller)
             if (game && game.images.egg.complete) {
-                const size = 60; // Size for egg
+                const width = 20;  // Width (smaller)
+                const height = 28; // Height (smaller but same ratio)
                 ctx.save();
-                ctx.drawImage(game.images.egg, this.x - size/2, this.y - size/2, size, size);
+                ctx.drawImage(game.images.egg, this.x - width/2, this.y - height/2, width, height);
                 ctx.restore();
             } else {
                 // Fallback if image not loaded - draw simple egg
                 ctx.save();
                 ctx.fillStyle = '#f5f5dc'; // Cream color
                 ctx.beginPath();
-                ctx.ellipse(this.x, this.y, 30, 40, 0, 0, Math.PI * 2);
+                ctx.ellipse(this.x, this.y, 20, 28, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.strokeStyle = '#d3d3d3';
                 ctx.lineWidth = 2;
@@ -285,9 +287,9 @@ class Goose {
                 ctx.restore();
             }
         } else if (this.state === GooseState.GOSLING) {
-            // Draw gosling with actual image (bigger)
+            // Draw gosling with actual image (smaller)
             if (game && game.images.gosling.complete) {
-                const size = 70; // Increased from 40
+                const size = 50; // Smaller gosling
                 ctx.save();
                 if (this.facingLeft) {
                     ctx.scale(-1, 1);
@@ -300,13 +302,13 @@ class Goose {
                 // Fallback if image not loaded
                 ctx.fillStyle = '#FFD700';
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 25, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
                 ctx.fill();
             }
         } else {
-            // Draw adult goose with actual image (bigger)
+            // Draw adult goose with actual image (1.2x bigger)
             if (game && game.images.adult.complete) {
-                const size = 100; // Increased from 60
+                const size = 120; // 1.2x bigger
                 ctx.save();
                 if (this.facingLeft) {
                     ctx.scale(-1, 1);
@@ -319,7 +321,7 @@ class Goose {
                 // Fallback if image not loaded
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 35, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 40, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -362,12 +364,13 @@ class Predator {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Bounce off edges
-        if (this.x < 0 || this.x > width) this.vx *= -1;
-        if (this.y < 0 || this.y > height) this.vy *= -1;
+        // Bounce off edges (with margin)
+        const margin = 50;
+        if (this.x < margin || this.x > width - margin) this.vx *= -1;
+        if (this.y < margin || this.y > height - margin) this.vy *= -1;
 
-        this.x = Math.max(0, Math.min(width, this.x));
-        this.y = Math.max(0, Math.min(height, this.y));
+        this.x = Math.max(margin, Math.min(width - margin, this.x));
+        this.y = Math.max(margin, Math.min(height - margin, this.y));
     }
 
     findNearestGoose(geese) {
@@ -403,27 +406,27 @@ class Predator {
 
     draw(ctx, game) {
         if (this.type === PredatorType.FOX) {
-            // Draw fox with actual image
+            // Draw fox with actual image (smaller)
             if (game && game.images.fox.complete) {
-                const size = 70; // Good size for fox
+                const size = 50; // Smaller fox
                 ctx.drawImage(game.images.fox, this.x - size/2, this.y - size/2, size, size);
             } else {
                 // Fallback
                 ctx.fillStyle = '#FF4500';
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 30, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 25, 0, Math.PI * 2);
                 ctx.fill();
             }
         } else {
-            // Draw eagle with actual image
+            // Draw eagle with actual image (smaller)
             if (game && game.images.eagle.complete) {
-                const size = 80; // Good size for eagle
+                const size = 55; // Smaller eagle
                 ctx.drawImage(game.images.eagle, this.x - size/2, this.y - size/2, size, size);
             } else {
                 // Fallback
                 ctx.fillStyle = '#8B4513';
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 25, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 22, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -945,8 +948,36 @@ class Game {
                 goose.survivalChance = goose.calculateSurvivalChance();
             });
             
+            // Regenerate terrain (new location = new environment!)
+            this.regenerateTerrain();
+            
+            this.logEvent(`🗺️ Migrated ${direction}! New terrain discovered.`, 'positive');
             this.updateUI();
         }, 5000);
+    }
+    
+    regenerateTerrain() {
+        // Clear old terrain
+        this.ponds = [];
+        this.bushes = [];
+        
+        // Generate new random ponds (3-5 ponds)
+        const numPonds = 3 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < numPonds; i++) {
+            const x = 100 + Math.random() * (this.width - 300);
+            const y = 100 + Math.random() * (this.height - 200);
+            const w = 80 + Math.random() * 100;  // 80-180 width
+            const h = 60 + Math.random() * 80;   // 60-140 height
+            this.ponds.push(new Pond(x, y, w, h));
+        }
+        
+        // Generate new random bushes (4-7 bushes)
+        const numBushes = 4 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < numBushes; i++) {
+            const x = 50 + Math.random() * (this.width - 100);
+            const y = 50 + Math.random() * (this.height - 100);
+            this.bushes.push(new Bush(x, y));
+        }
     }
     
     hideAllGeese() {
@@ -1195,5 +1226,41 @@ window.addEventListener('load', () => {
     
     document.getElementById('addPredatorBtn').addEventListener('click', () => {
         game.addPredator();
+    });
+    
+    // Arrow key controls - move all geese
+    window.addEventListener('keydown', (e) => {
+        const moveSpeed = 15; // Pixels to move geese
+        
+        switch(e.key) {
+            case 'ArrowUp':
+                game.geese.forEach(goose => {
+                    goose.y -= moveSpeed;
+                    goose.y = Math.max(50, goose.y); // Keep in bounds
+                });
+                e.preventDefault(); // Prevent page scrolling
+                break;
+            case 'ArrowDown':
+                game.geese.forEach(goose => {
+                    goose.y += moveSpeed;
+                    goose.y = Math.min(game.height - 50, goose.y); // Keep in bounds
+                });
+                e.preventDefault();
+                break;
+            case 'ArrowLeft':
+                game.geese.forEach(goose => {
+                    goose.x -= moveSpeed;
+                    goose.x = Math.max(50, goose.x); // Keep in bounds
+                });
+                e.preventDefault();
+                break;
+            case 'ArrowRight':
+                game.geese.forEach(goose => {
+                    goose.x += moveSpeed;
+                    goose.x = Math.min(game.width - 50, goose.x); // Keep in bounds
+                });
+                e.preventDefault();
+                break;
+        }
     });
 });
