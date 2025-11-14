@@ -2,6 +2,9 @@
 
 A realistic web-based goose migration simulation game built with Flask and vanilla JavaScript. Guide your flock through the challenges of migration using **Monte Carlo simulation** for realistic survival probabilities and **geographic modeling** for climate-based gameplay!
 
+## 🔗 Play on Browser!
+https://ele906.github.io/GooseGameWeb/
+
 ## 🎮 Features
 
 ### Realistic Life Cycle
